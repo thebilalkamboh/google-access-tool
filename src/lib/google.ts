@@ -67,26 +67,37 @@ export async function grantAnalyticsAccess(
 
 export async function grantSearchConsoleAccess(
   accessToken: string,
-  refreshToken: string,
+  _refreshToken: string,
   agencyEmail: string
 ): Promise<{ resourceId: string; resourceName: string }[]> {
-  const auth = getOAuthClient();
-  auth.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
-
-  const webmasters = google.webmasters({ version: 'v3', auth }) as any;
-  const { data } = await webmasters.sites.list();
   const results: { resourceId: string; resourceName: string }[] = [];
 
-  for (const site of data.siteEntry ?? []) {
+  // List sites
+  const sitesRes = await fetch(
+    'https://www.googleapis.com/webmasters/v3/sites',
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!sitesRes.ok) throw new Error('Could not list Search Console sites');
+  const sitesData = await sitesRes.json();
+
+  for (const site of sitesData.siteEntry ?? []) {
     if (site.permissionLevel === 'siteOwner' || site.permissionLevel === 'siteFullUser') {
-      await webmasters.sitePermissions.add({
-        siteUrl: site.siteUrl!,
-        requestBody: {
-          permissionLevel: 'siteFullUser',
-          email: agencyEmail,
-        },
-      } as any);
-      results.push({ resourceId: site.siteUrl!, resourceName: site.siteUrl! });
+      const encodedUrl = encodeURIComponent(site.siteUrl);
+      await fetch(
+        `https://www.googleapis.com/webmasters/v3/sites/${encodedUrl}/permissions`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            permissionLevel: 'siteFullUser',
+            email: agencyEmail,
+          }),
+        }
+      );
+      results.push({ resourceId: site.siteUrl, resourceName: site.siteUrl });
     }
   }
   return results;
