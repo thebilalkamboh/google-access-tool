@@ -75,3 +75,4 @@ Open http://localhost:3000
 - Update the OAuth redirect URI in Google Cloud Console to your production URL
 - Use a proper `JWT_SECRET` (32+ random characters)
 - Deploy to Vercel, Railway, or any Node.js host
+- 
