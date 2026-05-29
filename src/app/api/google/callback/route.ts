@@ -10,7 +10,7 @@ import {
 } from '@/lib/google';
 
 // state param is the client token
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest, _ctx?: unknown) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state'); // client token
