@@ -1,0 +1,137 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { google } from 'googleapis';
+import { getOAuthClient } from '@/lib/google';
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  const { token } = await params;
+  const client = await prisma.client.findUnique({ where: { token }, include: { services: true } });
+  if (!client || !client.accessToken) {
+    return NextResponse.json({ error: 'Not found or not authenticated' }, { status: 404 });
+  }
+
+  const auth = getOAuthClient();
+  auth.setCredentials({
+    access_token: client.accessToken,
+    refresh_token: client.refreshToken ?? undefined,
+  });
+
+  const requestedServices = new Set(client.services.map(s => s.service));
+  const result: Record<string, any[]> = {};
+
+  // ── Google Analytics ──────────────────────────────────────────────────────
+  if (requestedServices.has('GOOGLE_ANALYTICS')) {
+    try {
+      const analyticsAdmin = google.analyticsadmin({ version: 'v1alpha' as any, auth }) as any;
+      const accountsRes = await analyticsAdmin.accounts.list();
+      const properties: any[] = [];
+      for (const account of accountsRes.data.accounts ?? []) {
+        const propertiesRes = await analyticsAdmin.properties.list({
+          filter: `parent:${account.name}`,
+        });
+        for (const property of propertiesRes.data.properties ?? []) {
+          properties.push({
+            id: property.name,
+            name: `${property.displayName} (${account.displayName})`,
+          });
+        }
+      }
+      result.GOOGLE_ANALYTICS = properties;
+    } catch {
+      result.GOOGLE_ANALYTICS = [];
+    }
+  }
+
+  // ── Search Console ────────────────────────────────────────────────────────
+  if (requestedServices.has('GOOGLE_SEARCH_CONSOLE')) {
+    try {
+      const sitesRes = await fetch('https://www.googleapis.com/webmasters/v3/sites', {
+        headers: { Authorization: `Bearer ${client.accessToken}` },
+      });
+      const sitesData = await sitesRes.json();
+      result.GOOGLE_SEARCH_CONSOLE = (sitesData.siteEntry ?? []).map((s: any) => ({
+        id: s.siteUrl,
+        name: s.siteUrl,
+      }));
+    } catch {
+      result.GOOGLE_SEARCH_CONSOLE = [];
+    }
+  }
+
+  // ── Google Ads ────────────────────────────────────────────────────────────
+  if (requestedServices.has('GOOGLE_ADS')) {
+    try {
+      const adsRes = await fetch(
+        'https://googleads.googleapis.com/v17/customers:listAccessibleCustomers',
+        {
+          headers: {
+            Authorization: `Bearer ${client.accessToken}`,
+            'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? '',
+          },
+        }
+      );
+      if (adsRes.ok) {
+        const adsData = await adsRes.json();
+        result.GOOGLE_ADS = (adsData.resourceNames ?? []).map((r: string) => ({
+          id: r.replace('customers/', ''),
+          name: `Account ${r.replace('customers/', '')}`,
+        }));
+      } else {
+        result.GOOGLE_ADS = [];
+      }
+    } catch {
+      result.GOOGLE_ADS = [];
+    }
+  }
+
+  // ── Tag Manager ───────────────────────────────────────────────────────────
+  if (requestedServices.has('GOOGLE_TAG_MANAGER')) {
+    try {
+      const tagmanager = google.tagmanager({ version: 'v2', auth }) as any;
+      const accountsRes = await tagmanager.accounts.list();
+      const containers: any[] = [];
+      for (const account of accountsRes.data.account ?? []) {
+        const containersRes = await tagmanager.accounts.containers.list({
+          parent: account.path,
+        });
+        for (const container of containersRes.data.container ?? []) {
+          containers.push({
+            id: container.path,
+            name: `${container.name} (${account.name})`,
+            accountId: account.accountId,
+            accountPath: account.path,
+          });
+        }
+      }
+      result.GOOGLE_TAG_MANAGER = containers;
+    } catch {
+      result.GOOGLE_TAG_MANAGER = [];
+    }
+  }
+
+  // ── Business Profile ──────────────────────────────────────────────────────
+  if (requestedServices.has('GOOGLE_BUSINESS_PROFILE')) {
+    try {
+      const accountsRes = await fetch(
+        'https://mybusinessaccountmanagement.googleapis.com/v1/accounts',
+        { headers: { Authorization: `Bearer ${client.accessToken}` } }
+      );
+      if (accountsRes.ok) {
+        const accountsData = await accountsRes.json();
+        result.GOOGLE_BUSINESS_PROFILE = (accountsData.accounts ?? []).map((a: any) => ({
+          id: a.name,
+          name: a.accountName,
+        }));
+      } else {
+        result.GOOGLE_BUSINESS_PROFILE = [];
+      }
+    } catch {
+      result.GOOGLE_BUSINESS_PROFILE = [];
+    }
+  }
+
+  return NextResponse.json(result);
+}

@@ -17,15 +17,17 @@ model User {
 }
 
 model Client {
-  id          String          @id @default(cuid())
-  name        String
-  email       String
-  token       String          @unique
-  userId      String
-  user        User            @relation(fields: [userId], references: [id])
-  createdAt   DateTime        @default(now())
-  completedAt DateTime?
-  services    ServiceAccess[]
+  id           String          @id @default(cuid())
+  name         String
+  email        String
+  token        String          @unique
+  userId       String
+  user         User            @relation(fields: [userId], references: [id])
+  createdAt    DateTime        @default(now())
+  completedAt  DateTime?
+  accessToken  String?
+  refreshToken String?
+  services     ServiceAccess[]
 }
 
 // service: GOOGLE_ANALYTICS | GOOGLE_SEARCH_CONSOLE | GOOGLE_ADS | GOOGLE_TAG_MANAGER | GOOGLE_BUSINESS_PROFILE
