@@ -73,7 +73,7 @@ export async function grantSearchConsoleAccess(
   const auth = getOAuthClient();
   auth.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
 
-  const webmasters = google.webmasters({ version: 'v3', auth });
+  const webmasters = google.webmasters({ version: 'v3', auth }) as any;
   const { data } = await webmasters.sites.list();
   const results: { resourceId: string; resourceName: string }[] = [];
 
@@ -102,7 +102,7 @@ export async function grantTagManagerAccess(
   const auth = getOAuthClient();
   auth.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
 
-  const tagmanager = google.tagmanager({ version: 'v2', auth });
+  const tagmanager = google.tagmanager({ version: 'v2', auth }) as any;
   const { data } = await tagmanager.accounts.list();
   const results: { resourceId: string; resourceName: string }[] = [];
 
