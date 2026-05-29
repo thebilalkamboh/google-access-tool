@@ -38,7 +38,7 @@ export async function grantAnalyticsAccess(
   const auth = getOAuthClient();
   auth.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
 
-  const analyticsAdmin = google.analyticsadmin({ version: 'v1beta', auth });
+  const analyticsAdmin = google.analyticsadmin({ version: 'v1alpha' as any, auth }) as any;
   const { data } = await analyticsAdmin.accounts.list();
   const results: { resourceId: string; resourceName: string }[] = [];
 
