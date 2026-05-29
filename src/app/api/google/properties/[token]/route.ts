@@ -25,14 +25,20 @@ export async function GET(
   // ── Google Analytics ──────────────────────────────────────────────────────
   if (requestedServices.has('GOOGLE_ANALYTICS')) {
     try {
-      const analyticsAdmin = google.analyticsadmin({ version: 'v1alpha' as any, auth }) as any;
-      const accountsRes = await analyticsAdmin.accounts.list();
+      // Use REST directly to avoid googleapis type issues
+      const gaRes = await fetch(
+        'https://analyticsadmin.googleapis.com/v1alpha/accounts',
+        { headers: { Authorization: `Bearer ${client.accessToken}` } }
+      );
+      const gaData = await gaRes.json();
       const properties: any[] = [];
-      for (const account of accountsRes.data.accounts ?? []) {
-        const propertiesRes = await analyticsAdmin.properties.list({
-          filter: `parent:${account.name}`,
-        });
-        for (const property of propertiesRes.data.properties ?? []) {
+      for (const account of gaData.accounts ?? []) {
+        const propsRes = await fetch(
+          `https://analyticsadmin.googleapis.com/v1alpha/properties?filter=parent:${account.name}`,
+          { headers: { Authorization: `Bearer ${client.accessToken}` } }
+        );
+        const propsData = await propsRes.json();
+        for (const property of propsData.properties ?? []) {
           properties.push({
             id: property.name,
             name: `${property.displayName} (${account.displayName})`,
@@ -40,6 +46,7 @@ export async function GET(
         }
       }
       result.GOOGLE_ANALYTICS = properties;
+      if (!gaRes.ok) result._errors = { ...result._errors, GOOGLE_ANALYTICS: JSON.stringify(gaData) };
     } catch (e: any) {
       result.GOOGLE_ANALYTICS = [];
       result._errors = { ...result._errors, GOOGLE_ANALYTICS: e.message };

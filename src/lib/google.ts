@@ -6,6 +6,8 @@ const SCOPES = [
   'https://www.googleapis.com/auth/adwords',
   'https://www.googleapis.com/auth/tagmanager.manage.accounts',
   'https://www.googleapis.com/auth/analytics.manage.users',
+  'https://www.googleapis.com/auth/analytics.edit',
+  'https://www.googleapis.com/auth/analytics',
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile',
 ];
