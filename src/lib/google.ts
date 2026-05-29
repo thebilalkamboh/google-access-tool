@@ -47,11 +47,11 @@ export async function grantAnalyticsAccess(
       filter: `parent:${account.name}`,
     });
     for (const property of propertiesRes.data.properties ?? []) {
-      await analyticsAdmin.properties.userLinks.create({
+      await analyticsAdmin.properties.accessBindings.create({
         parent: property.name!,
         requestBody: {
-          emailAddress: agencyEmail,
-          directRoles: ['predefinedRoles/editor'],
+          user: agencyEmail,
+          roles: ['roles/analyst'],
         },
       });
       results.push({
