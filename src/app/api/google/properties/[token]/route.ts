@@ -40,8 +40,9 @@ export async function GET(
         }
       }
       result.GOOGLE_ANALYTICS = properties;
-    } catch {
+    } catch (e: any) {
       result.GOOGLE_ANALYTICS = [];
+      result._errors = { ...result._errors, GOOGLE_ANALYTICS: e.message };
     }
   }
 
@@ -56,8 +57,9 @@ export async function GET(
         id: s.siteUrl,
         name: s.siteUrl,
       }));
-    } catch {
+    } catch (e: any) {
       result.GOOGLE_SEARCH_CONSOLE = [];
+      result._errors = { ...result._errors, GOOGLE_SEARCH_CONSOLE: e.message };
     }
   }
 
@@ -80,10 +82,13 @@ export async function GET(
           name: `Account ${r.replace('customers/', '')}`,
         }));
       } else {
+        const errText = await adsRes.text();
         result.GOOGLE_ADS = [];
+        result._errors = { ...result._errors, GOOGLE_ADS: errText };
       }
-    } catch {
+    } catch (e: any) {
       result.GOOGLE_ADS = [];
+      result._errors = { ...result._errors, GOOGLE_ADS: e.message };
     }
   }
 
@@ -107,8 +112,9 @@ export async function GET(
         }
       }
       result.GOOGLE_TAG_MANAGER = containers;
-    } catch {
+    } catch (e: any) {
       result.GOOGLE_TAG_MANAGER = [];
+      result._errors = { ...result._errors, GOOGLE_TAG_MANAGER: e.message };
     }
   }
 
@@ -126,10 +132,13 @@ export async function GET(
           name: a.accountName,
         }));
       } else {
+        const errText = await accountsRes.text();
         result.GOOGLE_BUSINESS_PROFILE = [];
+        result._errors = { ...result._errors, GOOGLE_BUSINESS_PROFILE: errText };
       }
-    } catch {
+    } catch (e: any) {
       result.GOOGLE_BUSINESS_PROFILE = [];
+      result._errors = { ...result._errors, GOOGLE_BUSINESS_PROFILE: e.message };
     }
   }
 
