@@ -20,7 +20,7 @@ export async function GET(
   });
 
   const requestedServices = new Set(client.services.map(s => s.service));
-  const result: Record<string, any[]> = {};
+  const result: Record<string, any> = {};
 
   // ── Google Analytics ──────────────────────────────────────────────────────
   if (requestedServices.has('GOOGLE_ANALYTICS')) {
