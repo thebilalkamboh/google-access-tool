@@ -31,6 +31,8 @@ export async function GET(
         { headers: { Authorization: `Bearer ${client.accessToken}` } }
       );
       const gaData = await gaRes.json();
+      // Debug: always log raw response
+      result._debug = { ...result._debug, GA_RAW: gaData, GA_STATUS: gaRes.status };
       const properties: any[] = [];
       for (const account of gaData.accounts ?? []) {
         const propsRes = await fetch(
