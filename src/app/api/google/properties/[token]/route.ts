@@ -76,7 +76,7 @@ export async function GET(
   if (requestedServices.has('GOOGLE_ADS')) {
     try {
       const adsRes = await fetch(
-        'https://googleads.googleapis.com/v17/customers:listAccessibleCustomers',
+        'https://googleads.googleapis.com/v19/customers:listAccessibleCustomers',
         {
           headers: {
             Authorization: `Bearer ${client.accessToken}`,

@@ -92,7 +92,7 @@ export async function POST(
     try {
       const managerCustomerId = process.env.GOOGLE_ADS_MANAGER_ID ?? '';
       const res = await fetch(
-        `https://googleads.googleapis.com/v17/customers/${managerCustomerId}/customerManagerLinks:mutate`,
+        `https://googleads.googleapis.com/v19/customers/${managerCustomerId}/customerManagerLinks:mutate`,
         {
           method: 'POST',
           headers: {

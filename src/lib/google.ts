@@ -25,7 +25,8 @@ export function getAuthUrl(state: string) {
   return client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES,
-    prompt: 'consent',
+    prompt: 'consent select_account',
+    include_granted_scopes: false,
     state,
   });
 }
